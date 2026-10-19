@@ -1,0 +1,431 @@
+// منصة شاعر: نموذج البيانات
+// المرجع: وثيقة متطلبات المنتج (docs/PRD.pdf) وخطة إعادة البناء.
+//
+// قواعد ملزمة:
+// - المبالغ كلها بالهللة (Int)، والضريبة تُخزَّن منفصلة.
+// - لا حذف: العقود والعروض والحضور والغرامات تُلغى بحالة.
+// - الحالات نصوص مُعرَّفة في src/lib/domain.ts، لتبقى المخطط صالحاً لـ SQLite و PostgreSQL معاً.
+// - التطوير المحلي على SQLite، والإنتاج على PostgreSQL (docs/DEPLOYMENT.md).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ───────── الهوية والجلسات ─────────
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String
+  phone             String?
+  isAdmin           Boolean   @default(false)
+  adminDept         String?   // إدارة المنصة (المادة 61)
+  status            String    @default("ACTIVE") // ACTIVE | UNDER_REVIEW | SUSPENDED
+  suspendedUntil    DateTime?
+  charterVersion    String?   // إصدار ميثاق الشرف المقبول (المواد 6 إلى 8)
+  regulationVersion String?   // إصدار اللائحة المقبول (المادتان 2 و78)
+  acceptedAt        DateTime?
+  birthYear         Int?      // لحماية القُصّر (الملحق ذ ذ)
+  createdAt         DateTime  @default(now())
+
+  parties       Party[]
+  sessions      Session[]
+  notifications Notification[]
+  evaluations   Evaluation[]   @relation("Evaluator")
+  auditLogs     AuditLog[]
+}
+
+model Session {
+  id        String   @id // بصمة الرمز، لا الرمز نفسه
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email])
+}
+
+// ───────── الأطراف (المادة 1) ─────────
+
+model Party {
+  id              String   @id @default(cuid())
+  userId          String
+  kind            String   // POET | ROW_LEADER | ROW_MEMBER | EVALUATOR | COMMITTEE | CRITIC | MEDIA_CHANNEL | PHOTOGRAPHY | BROADCAST | ORGANIZER | VENUE_HOST
+  entityType      String   @default("INDIVIDUAL") // INDIVIDUAL | ENTITY | GOVERNMENT
+  displayName     String
+  city            String
+  bio             String?
+  commercialReg   String?  // السجل التجاري للكيانات
+  freelanceNumber String?  // وثيقة العمل الحر (المادتان 17 و19)
+  freelanceExpiry DateTime?
+  iban            String?
+  ibanVerified    Boolean  @default(false) // الحساب البنكي المعتمد (المادتان 36 و62)
+  badge           String?  // VERIFIED | TRUSTED | VERIFIED_ORGANIZER | VERIFIED_MEDIA | UNDER_REVIEW | SUSPENDED (المادة 64)
+  priceBaseHalala Int?     // السعر الأساسي (المادة 29)
+  priceFactors    String?  // معاملات التسعير JSON: المدينة، النوع، الموسم...
+  rowId           String?  // عضو الصف
+  createdAt       DateTime @default(now())
+
+  user           User            @relation(fields: [userId], references: [id])
+  row            Row?            @relation("RowMembers", fields: [rowId], references: [id])
+  ledRows        Row[]           @relation("RowLeader")
+  licenses       License[]
+  organizedEvents Event[]        @relation("Organizer")
+  participations Participation[]
+  venues         Venue[]
+  cases          OperationalCase[]
+  grievances     Grievance[]
+  evaluationsReceived Evaluation[] @relation("Subject")
+  ledger         LedgerEntry[]
+
+  @@index([userId])
+  @@index([kind])
+}
+
+model Row {
+  id           String   @id @default(cuid())
+  name         String
+  leaderId     String
+  city         String
+  createdAt    DateTime @default(now())
+  leader       Party    @relation("RowLeader", fields: [leaderId], references: [id])
+  members      Party[]  @relation("RowMembers")
+}
+
+model Venue {
+  id          String   @id @default(cuid())
+  hostPartyId String
+  name        String
+  kind        String   // HALL | THEATER | REST_HOUSE | PALACE | SQUARE | DEDICATED (المادة 21)
+  city        String
+  address     String
+  capacity    Int
+  status      String   @default("PENDING") // PENDING | LICENSED | SUSPENDED
+  createdAt   DateTime @default(now())
+  host        Party    @relation(fields: [hostPartyId], references: [id])
+  events      Event[]
+}
+
+// ───────── التراخيص (المواد 9 إلى 21، والمادة 71) ─────────
+
+model LicenseType {
+  code             String   @id
+  nameAr           String
+  partyKind        String
+  entityType       String?  // يميّز الكيان من الفرد في الإعلام
+  feeHalala        Int
+  durationKind     String   // YEARS | PER_EVENT | PER_COMPETITION | BY_LICENSE | BY_EVENT
+  durationYears    Int?
+  payer            String   // HOLDER | ORGANIZER
+  article          String
+  requiresFreelance Boolean @default(false)
+  grants           String   // الصلاحيات الممنوحة، مفصولة بفواصل
+  pendingQuestion  String?  // سؤال مفتوح يمس هذا النوع
+  effectiveFrom    DateTime @default(now())
+  licenses         License[]
+}
+
+model License {
+  id           String    @id @default(cuid())
+  number       String    @unique
+  typeCode     String
+  partyId      String
+  status       String    @default("UNDER_REVIEW") // UNDER_REVIEW | AWAITING_PAYMENT | ACTIVE | EXPIRED | SUSPENDED | CANCELLED | REJECTED
+  scopeEventId String?   // ترخيص مؤقت مقيّد بفعالية (المواد 10 و15 و16)
+  feeHalala    Int
+  vatHalala    Int
+  paidByPartyId String?  // الدافع إن كان المنظّم
+  reviewNote   String?
+  issuedAt     DateTime?
+  expiresAt    DateTime?
+  verifyCode   String    @unique // رمز التحقق العام
+  createdAt    DateTime  @default(now())
+
+  type   LicenseType @relation(fields: [typeCode], references: [code])
+  party  Party       @relation(fields: [partyId], references: [id])
+
+  @@index([partyId])
+  @@index([status])
+}
+
+// ───────── الفعاليات (المواد 22 إلى 25) ─────────
+
+model Event {
+  id                 String   @id @default(cuid())
+  number             String   @unique
+  organizerId        String
+  name               String
+  type               String   // OFFICIAL | SOCIAL | COMPETITION | MEDIA | SHOWCASE | TRAINING | EXPERIMENTAL | SEASONAL | MAJOR (المادة 22)
+  level              String   @default("STANDARD") // STANDARD | LARGE | MAJOR (تصنيف الفعالية، المادة 24)
+  startsAt           DateTime
+  durationHours      Int
+  city               String
+  venueId            String?
+  venueText          String?
+  venueConfirmedAt   DateTime? // تأكيد الموقع المضيف للحجز
+  expectedAttendance Int
+  filming            Boolean  @default(false)
+  broadcast          Boolean  @default(false)
+  prizes             String?
+  contact            String
+  status             String   @default("DRAFT") // حالات المادة 25
+  reviewNote         String?
+  cancelKind         String?
+  cancelReason       String?
+  cancelledBy        String?  // ORGANIZER | PARTY | FORCE_MAJEURE
+  createdAt          DateTime @default(now())
+
+  organizer      Party           @relation("Organizer", fields: [organizerId], references: [id])
+  venue          Venue?          @relation(fields: [venueId], references: [id])
+  participations Participation[]
+  cases          OperationalCase[]
+  evaluations    Evaluation[]
+  ledger         LedgerEntry[]
+
+  @@index([organizerId])
+  @@index([status])
+}
+
+// مقعد المشاركة: لكل طرف في الفعالية تفاوض وعقد وحضور خاص به.
+model Participation {
+  id                  String    @id @default(cuid())
+  eventId             String
+  role                String    // POET | ROW | EVALUATOR | COMMITTEE | MEDIA | PHOTOGRAPHY | BROADCAST
+  partyId             String?
+  honorary            Boolean   @default(false) // المشاركة الشرفية (المادة 23)
+  nonContinuous       Boolean   @default(false) // شاعر غير مستمر (المادة 10)
+  status              String    @default("INVITED") // INVITED | NEGOTIATING | AGREED | REJECTED | EXPIRED | CONTRACTED | EXECUTED | CANCELLED
+  agreedHalala        Int?
+  negotiationOpenedAt DateTime?
+  negotiationDeadline DateTime?
+  // أوقات المادة 39
+  attendStart         DateTime?
+  readyAt             DateTime?
+  performStart        DateTime?
+  performEnd          DateTime?
+  requiredHours       Int?
+  createdAt           DateTime  @default(now())
+
+  event      Event       @relation(fields: [eventId], references: [id])
+  party      Party?      @relation(fields: [partyId], references: [id])
+  offers     Offer[]
+  contract   Contract?
+  attendance Attendance?
+  cases      OperationalCase[]
+
+  @@index([eventId])
+  @@index([partyId])
+}
+
+model Offer {
+  id              String   @id @default(cuid())
+  participationId String
+  fromSide        String   // ORGANIZER | PARTY
+  amountHalala    Int
+  terms           String?
+  round           Int
+  status          String   @default("PENDING") // PENDING | COUNTERED | ACCEPTED | REJECTED | EXPIRED
+  createdAt       DateTime @default(now())
+
+  participation Participation @relation(fields: [participationId], references: [id])
+
+  @@index([participationId])
+}
+
+// ───────── العقود (المواد 30 إلى 33) ─────────
+
+model Contract {
+  id               String    @id @default(cuid())
+  number           String    @unique
+  participationId  String    @unique
+  version          Int       @default(1)
+  template         String    // POET | ROW | MEDIA | EVALUATOR (الملحق و)
+  body             String
+  contentHash      String
+  mediaRights      String    // FILMING,BROADCAST,CLIPS,ARCHIVE,REUSE (المادة 49)
+  status           String    @default("AWAITING_SIGNATURES") // AWAITING_SIGNATURES | ACTIVE | EXECUTED | CANCELLED
+  organizerSignedAt DateTime?
+  partySignedAt    DateTime?
+  organizerSigMeta String?
+  partySigMeta     String?
+  verifyCode       String    @unique
+  previousVersions String?   // JSON لإصدارات التعديل السابقة (المادة 32)
+  createdAt        DateTime  @default(now())
+
+  participation Participation @relation(fields: [participationId], references: [id])
+  ledger        LedgerEntry[]
+}
+
+// ───────── المال (المواد 34 إلى 38) ─────────
+
+model LedgerEntry {
+  id           String   @id @default(cuid())
+  kind         String   // LICENSE_FEE | VAT | ESCROW_HOLD | ESCROW_RELEASE | PAYOUT | REFUND | FINE | CANCEL_DEDUCTION
+  amountHalala Int
+  direction    String   // IN | OUT | HOLD
+  partyId      String?
+  eventId      String?
+  licenseId    String?
+  contractId   String?
+  memo         String
+  createdAt    DateTime @default(now())
+
+  party    Party?    @relation(fields: [partyId], references: [id])
+  event    Event?    @relation(fields: [eventId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
+
+  @@index([partyId])
+  @@index([eventId])
+}
+
+// ───────── يوم الفعالية (المواد 39 إلى 42) ─────────
+
+model Attendance {
+  id                  String    @id @default(cuid())
+  participationId     String    @unique
+  token               String    @unique // رمز QR
+  organizerMarkedAt   DateTime?
+  organizerSaysPresent Boolean?
+  partyMarkedAt       DateTime?
+  partySaysPresent    Boolean?
+  status              String    @default("EXPECTED") // EXPECTED | PARTIAL | CONFIRMED | CONFLICT | RESOLVED
+  payoutFrozen        Boolean   @default(false)
+  resolution          String?
+  executionApprovedAt DateTime?
+
+  participation Participation @relation(fields: [participationId], references: [id])
+}
+
+// ───────── الطوارئ والامتثال (المواد 33 و43 إلى 55) ─────────
+
+model OperationalCase {
+  id                String    @id @default(cuid())
+  kind              String    // ABSENCE | LATE_APOLOGY | EARLY_CANCEL | LATE_CANCEL | EMERGENCY_CANCEL | NONCOMPLIANCE | ROW_SHORTAGE
+  eventId           String
+  participationId   String?
+  partyId           String
+  ratePercent       Int?
+  fineHalala        Int       @default(0)
+  ruleKey           String
+  article           String
+  pendingRule       Boolean   @default(false) // القاعدة معلّقة على سؤال لصاحب المبادرة
+  objectionDeadline DateTime
+  status            String    @default("OBJECTION_WINDOW") // OBJECTION_WINDOW | FINAL | AMENDED
+  notes             String?
+  createdAt         DateTime  @default(now())
+
+  event         Event          @relation(fields: [eventId], references: [id])
+  participation Participation? @relation(fields: [participationId], references: [id])
+  party         Party          @relation(fields: [partyId], references: [id])
+  grievances    Grievance[]
+}
+
+model Grievance {
+  id        String   @id @default(cuid())
+  number    String   @unique
+  partyId   String
+  caseId    String?
+  category  String   // FINE | EVALUATION | VIOLATION | VERIFICATION | PENALTY | OPERATIONAL (المادة 55)
+  reasons   String
+  requested String
+  status    String   @default("SUBMITTED") // SUBMITTED | UNDER_REVIEW | NEEDS_INFO | ACCEPTED | PARTIAL | REJECTED
+  decision  String?
+  reviewerId String?
+  createdAt DateTime @default(now())
+  decidedAt DateTime?
+
+  party Party            @relation(fields: [partyId], references: [id])
+  case  OperationalCase? @relation(fields: [caseId], references: [id])
+}
+
+// ───────── التقييم (المادتان 47 و48، والملحق أ) ─────────
+
+model Evaluation {
+  id              String   @id @default(cuid())
+  eventId         String
+  subjectPartyId  String
+  evaluatorUserId String
+  form            String   // POET | ROW | ORGANIZER
+  scores          String   // JSON: معيار ← درجة
+  total           Int
+  createdAt       DateTime @default(now())
+
+  event     Event @relation(fields: [eventId], references: [id])
+  subject   Party @relation("Subject", fields: [subjectPartyId], references: [id])
+  evaluator User  @relation("Evaluator", fields: [evaluatorUserId], references: [id])
+
+  @@unique([eventId, subjectPartyId, evaluatorUserId])
+}
+
+// ───────── الحوكمة ─────────
+
+// سجل النشاط: يُكتب ولا يُعدَّل ولا يُحذف (الملحق ي). يحرسه اختبار.
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  entity      String
+  entityId    String
+  detail      String?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id])
+
+  @@index([entity, entityId])
+}
+
+// معاملات القواعد المؤرخة (المادتان 38 و71): القرار يُحسب بالقيمة السارية يوم الحالة.
+model Parameter {
+  id            String   @id @default(cuid())
+  key           String
+  value         String
+  label         String
+  article       String
+  status        String   @default("CONFIRMED") // CONFIRMED | PENDING
+  question      String?  // رقم السؤال في نموذج النقاش إن كانت معلّقة
+  effectiveFrom DateTime @default(now())
+
+  @@unique([key, effectiveFrom])
+}
+
+// السياسات واللائحة بإصداراتها (المواد 60 و77 و78)
+model Policy {
+  id            String   @id @default(cuid())
+  code          String
+  title         String
+  version       String
+  summary       String
+  effectiveFrom DateTime
+
+  @@unique([code, version])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}

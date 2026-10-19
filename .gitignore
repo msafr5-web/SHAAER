@@ -1,0 +1,20 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# البيئة والأسرار
+.env
+.env.*
+!.env.example
+
+# قاعدة التطوير المحلية
+prisma/*.db
+prisma/*.db-journal
+
+npm-debug.log*
+.DS_Store
+
+# لقطات اختبار الرحلة
+e2e-shots/

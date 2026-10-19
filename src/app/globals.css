@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * رموز الهوية: المصدر الوحيد للألوان. tailwind.config.ts يقرأ منها.
+ * الهوية مؤقتة حتى يعتمدها صاحب المبادرة (الملحق د): أخضر الشعار #1f4d45 = green-800، وذهبيه #9a7a3a = gold-700.
+ */
+:root {
+  --green-50: 238 245 242;  --green-100: 214 232 225; --green-200: 173 207 194; --green-300: 125 175 157;
+  --green-400: 79 140 120;  --green-500: 47 110 94;   --green-600: 41 99 85;    --green-700: 34 86 74;
+  --green-800: 31 77 69;    --green-900: 20 52 46;
+
+  --gold-50: 251 246 234;   --gold-100: 245 234 206;  --gold-200: 234 213 160;  --gold-300: 221 189 114;
+  --gold-400: 205 165 80;   --gold-500: 184 145 64;   --gold-600: 168 133 60;   --gold-700: 154 122 58;
+  --gold-800: 122 96 45;    --gold-900: 92 72 34;
+
+  --ink-50: 247 248 248;    --ink-100: 236 238 237;   --ink-200: 216 220 218;   --ink-300: 186 192 189;
+  --ink-400: 140 148 144;   --ink-500: 95 107 102;    --ink-600: 72 82 78;      --ink-700: 52 60 57;
+  --ink-800: 38 48 45;      --ink-900: 24 30 28;
+
+  --sand-50: 251 249 243;   --sand-100: 245 241 230;  --sand-200: 234 227 210;
+  --line: 217 211 196;
+
+  --success-50: 230 242 236; --success-100: 200 230 214; --success-700: 29 107 71;
+  --warning-50: 251 242 224; --warning-100: 244 225 184; --warning-700: 138 90 0;
+  --danger-50: 251 236 236;  --danger-100: 245 205 205;  --danger-700: 155 44 44;
+  --info-50: 229 238 248;    --info-100: 199 219 241;    --info-700: 29 68 112;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body { @apply bg-sand-50 text-ink-700 antialiased; }
+
+/* الأرقام بعرض ثابت في كل جدول ومبلغ */
+table, .tabular { font-variant-numeric: tabular-nums; }
+
+@layer components {
+  /* الأسطح الثلاثة: لا تُعاد كتابتها بأصناف مفردة */
+  .surface { @apply rounded-xl border border-line bg-white/90 shadow-sm backdrop-blur; }
+  .surface-inset { @apply rounded-lg border border-line/70 bg-sand-50; }
+  .surface-bar { @apply sticky top-0 z-30 border-b border-line bg-white/85 backdrop-blur; }
+
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-green-800 text-white hover:bg-green-900; }
+  /* زر ذهبي واحد (CTA) في الشاشة */
+  .btn-gold { @apply btn bg-gold-500 text-green-900 hover:bg-gold-400; }
+  .btn-ghost { @apply btn border border-line bg-white text-ink-700 hover:bg-sand-100; }
+  .btn-danger { @apply btn bg-danger-700 text-white hover:opacity-90; }
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+
+  .label { @apply mb-1 block text-sm font-semibold text-ink-700; }
+  .hint { @apply mt-1 text-xs text-ink-500; }
+  .input { @apply w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200; }
+
+  .table-base { @apply w-full text-sm; }
+  .table-base th { @apply border-b border-line bg-sand-100 px-3 py-2 text-start text-xs font-bold text-ink-600; }
+  .table-base td { @apply border-b border-line/60 px-3 py-2.5 align-top text-ink-700; }
+
+  .gold-underline { @apply relative inline-block pb-2; }
+  .gold-underline::after { content: ""; @apply absolute bottom-0 start-0 h-1 w-12 rounded-full bg-gold-500; }
+
+  .link { @apply font-semibold text-green-700 underline-offset-4 hover:underline; }
+}
