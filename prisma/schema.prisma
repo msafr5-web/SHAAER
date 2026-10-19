@@ -5,15 +5,17 @@
 // - المبالغ كلها بالهللة (Int)، والضريبة تُخزَّن منفصلة.
 // - لا حذف: العقود والعروض والحضور والغرامات تُلغى بحالة.
 // - الحالات نصوص مُعرَّفة في src/lib/domain.ts، لتبقى المخطط صالحاً لـ SQLite و PostgreSQL معاً.
-// - التطوير المحلي على SQLite، والإنتاج على PostgreSQL (docs/DEPLOYMENT.md).
+// - PostgreSQL في كل البيئات (docs/DEPLOYMENT.md). DATABASE_URL للاتصال المجمّع،
+//   و DATABASE_URL_UNPOOLED للاتصال المباشر الذي تحتاجه الترحيلات.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // ───────── الهوية والجلسات ─────────

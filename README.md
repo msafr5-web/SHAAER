@@ -44,7 +44,7 @@
 ```bash
 npm install
 cp .env.example .env
-npm run db:push
+npm run db:push      # PostgreSQL: اضبط DATABASE_URL في .env أولاً
 npm run db:seed
 npm run dev        # http://localhost:3010
 ```
@@ -64,7 +64,7 @@ npx tsx scripts/e2e-journey.ts   # رحلة الملحق (هـ) كاملة في 
 
 ## الحزمة
 
-Next.js 15 (App Router) و TypeScript و Prisma و Tailwind. قاعدة التطوير SQLite، والإنتاج PostgreSQL: انظر [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Next.js 15 (App Router) و TypeScript و Prisma و Tailwind. قاعدة البيانات PostgreSQL، والنشر على Vercel: انظر [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## الهيكل
 

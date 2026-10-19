@@ -122,6 +122,12 @@ async function main() {
     });
   }
 
+  // البيانات المرجعية أعلاه تُزرع دائماً. البيانات التجريبية فقط في التطوير، أو بطلب صريح SEED_DEMO=true.
+  const wantDemo = process.env.SEED_DEMO === "true" || process.env.NODE_ENV !== "production";
+  if (!wantDemo) {
+    console.log("البيانات المرجعية جاهزة. لا بيانات تجريبية (SEED_DEMO غير مفعّل).");
+    return;
+  }
   if (await db.user.count()) {
     console.log("البيانات التجريبية موجودة، تخطّيت إنشاءها.");
     return;

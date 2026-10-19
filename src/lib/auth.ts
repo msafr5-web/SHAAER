@@ -32,9 +32,13 @@ export async function requestOtp(rawEmail: string): Promise<{ ok: true; devCode?
     data: { email, codeHash: hmac(`${email}:${code}`), expiresAt: new Date(Date.now() + OTP_MINUTES * 60_000) },
   });
 
-  // لا مزود بريد بعد: يُسجَّل الرمز في سجل الخادم، ويظهر على الشاشة في التطوير فقط.
+  // لا مزود بريد بعد: يُسجَّل الرمز في سجل الخادم، ويظهر على الشاشة في التطوير،
+  // أو في نسخة عرض منشورة بقرار صريح AUTH_DEMO_SHOW_CODE=true (أي أحد يدخل بأي بريد: لبيانات تجريبية فقط).
   console.info(`[OTP] ${email}: ${code}`);
-  const devCode = process.env.AUTH_DEV_SHOW_CODE === "true" && process.env.NODE_ENV !== "production" ? code : undefined;
+  const showCode =
+    (process.env.AUTH_DEV_SHOW_CODE === "true" && process.env.NODE_ENV !== "production") ||
+    process.env.AUTH_DEMO_SHOW_CODE === "true";
+  const devCode = showCode ? code : undefined;
   return { ok: true, devCode };
 }
 
