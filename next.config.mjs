@@ -13,6 +13,15 @@ const nextConfig = {
           { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self)" },
         ],
       },
+      // ملف تطبيق أندرويد: يُحمَّل ملفاً لا يُفتح صفحة
+      {
+        source: "/downloads/:file*.apk",
+        headers: [
+          { key: "Content-Type", value: "application/vnd.android.package-archive" },
+          { key: "Content-Disposition", value: "attachment; filename=\"shaaer.apk\"" },
+          { key: "Cache-Control", value: "no-cache" },
+        ],
+      },
       // عامل خدمة تطبيق الجوال: لا يُخزَّن، كي يصل كل تحديث فور نشره
       {
         source: "/sw.js",

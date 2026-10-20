@@ -18,3 +18,9 @@ npm-debug.log*
 
 # لقطات اختبار الرحلة
 e2e-shots/
+
+.vercel
+.env*
+
+# مخرجات بناء تطبيق أندرويد المؤقتة (الملف النهائي في public/downloads)
+android/build/

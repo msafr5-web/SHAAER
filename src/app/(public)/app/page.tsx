@@ -3,13 +3,15 @@ import QRCode from "qrcode";
 import { absoluteUrl } from "@/lib/url";
 import { Card, PageTitle } from "@/components/ui";
 import { InstallApp } from "@/components/pwa";
-import { IconBell, IconPhone, IconQr, IconShield } from "@/components/icons";
+import { IconBell, IconDownload, IconPhone, IconQr, IconShield } from "@/components/icons";
 
 export const metadata: Metadata = { title: "تطبيق الجوال" };
 
-// تطبيق الجوال: نسخة قابلة للتثبيت من المنصة نفسها (الجوال أولاً، الملحق ع)، فلا تختلف بياناتها عن الموقع.
+// تطبيق الجوال: المنصة نفسها (الجوال أولاً، الملحق ع)، فلا تختلف بياناتها عن الموقع، ولا يمر بمتجر Google أو Apple.
+// ملف أندرويد يُبنى بـ scripts/build-android.mjs إلى public/downloads.
+const APK = "/downloads/shaaer.apk";
 const STEPS = {
-  android: ["افتح shaaer.net في Chrome أو Edge.", "اضغط زر «تثبيت تطبيق شاعر» في هذه الصفحة، أو اختر «تثبيت التطبيق» من قائمة المتصفح (⋮).", "تظهر أيقونة شاعر على الشاشة الرئيسية، ويفتح التطبيق بملء الشاشة."],
+  android: ["اضغط «تحميل التطبيق لأندرويد» وانتظر اكتمال التحميل.", "افتح الملف shaaer.apk من الإشعارات أو من مجلد التنزيلات.", "إن طلب الجوال الإذن فاسمح بالتثبيت من هذا المصدر، ثم اضغط «تثبيت». تظهر أيقونة شاعر على الشاشة الرئيسية."],
   ios: ["افتح shaaer.net في Safari.", "اضغط زر المشاركة أسفل الشاشة.", "اختر «إضافة إلى الشاشة الرئيسية» ثم «إضافة»."],
 };
 
@@ -31,8 +33,15 @@ export default async function MobileAppPage() {
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-50 text-green-800"><IconPhone size={26} /></span>
             <div className="min-w-0 flex-1">
               <h2 className="text-lg font-bold text-green-900">التثبيت على هذا الجهاز</h2>
-              <p className="mt-1 text-sm leading-7 text-ink-600">يعمل على أندرويد وآيفون، ولا يحتاج إلى أكثر من دقيقة.</p>
-              <div className="mt-4"><InstallApp /></div>
+              <p className="mt-1 text-sm leading-7 text-ink-600">يُحمَّل من المنصة مباشرة، دون متجر Google Play أو App Store، وبلا حساب فيهما.</p>
+              <a href={APK} download className="btn-gold mt-4 w-full px-6 py-3 text-base sm:w-auto">
+                <IconDownload size={20} /> تحميل التطبيق لأندرويد
+              </a>
+              <p className="mt-2 text-xs text-ink-500">ملف APK · الإصدار 1.0 · أقل من 50 كيلوبايت · أندرويد 7 فأحدث</p>
+              <div className="mt-5 border-t border-line/70 pt-4">
+                <p className="mb-2 text-sm font-semibold text-green-900">آيفون، أو التثبيت من المتصفح</p>
+                <InstallApp />
+              </div>
             </div>
           </div>
         </Card>
@@ -45,10 +54,10 @@ export default async function MobileAppPage() {
       </div>
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
-        <Card title="أندرويد">
+        <Card title="أندرويد: ملف التطبيق">
           <ol className="list-decimal space-y-2 ps-5 text-sm leading-7 text-ink-700">{STEPS.android.map((s) => <li key={s}>{s}</li>)}</ol>
         </Card>
-        <Card title="آيفون وآيباد">
+        <Card title="آيفون وآيباد: من Safari">
           <ol className="list-decimal space-y-2 ps-5 text-sm leading-7 text-ink-700">{STEPS.ios.map((s) => <li key={s}>{s}</li>)}</ol>
         </Card>
       </div>
