@@ -38,4 +38,7 @@ export const IconArrowLeft = (p: P) => <Base {...p}><path d="M19 12H5M12 19l-7-7
 export const IconBadge = (p: P) => <Base {...p}><circle cx="12" cy="9" r="6" /><path d="m8.5 14.2-1.5 7.3 5-3 5 3-1.5-7.3" /></Base>;
 export const IconHandshake = (p: P) => <Base {...p}><path d="m11 17 2 2a1.4 1.4 0 0 0 2-2" /><path d="m14 14 2.5 2.5a1.4 1.4 0 0 0 2-2l-3.9-3.9a2 2 0 0 0-2.8 0l-.9.9a1.4 1.4 0 0 1-2-2l2.8-2.8a5 5 0 0 1 6.1-.8l.5.3a2 2 0 0 0 1.4.3L21 6" /><path d="m21 3 1 11h-2M3 3 2 14l6.5 6.5a1.4 1.4 0 0 0 2-2M3 4h8" /></Base>;
 export const IconBook = (p: P) => <Base {...p}><path d="M4 19.5V4.5A2 2 0 0 1 6 2.5h14v17H6a2 2 0 0 0-2 2 2 2 0 0 0 2 2h14" /></Base>;
-export const IconList = (p: P) => <Base {...p}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></Base>;
+export const IconPhone = (p: P) => <Base {...p}><rect x="6" y="2.5" width="12" height="19" rx="2.5" /><path d="M11 18.5h2" /></Base>;
+export const IconDownload = (p: P) => <Base {...p}><path d="M12 3v12M7 10l5 5 5-5M4 21h16" /></Base>;
+export const IconShare = (p: P) => <Base {...p}><path d="M12 3v12M8 7l4-4 4 4" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" /></Base>;
+export const IconList =(p: P) => <Base {...p}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></Base>;

@@ -4,6 +4,7 @@ import { Logo } from "./brand";
 
 const NAV = [
   { href: "/", label: "الرئيسية" },
+  { href: "/app", label: "تطبيق الجوال" },
   { href: "/licenses", label: "التراخيص والرسوم" },
   { href: "/directory", label: "دليل المرخّصين" },
   { href: "/regulation", label: "اللائحة والسياسات" },
@@ -53,6 +54,7 @@ export function PublicFooter() {
             <li><Link href="/licenses" className="hover:text-white">جدول التراخيص والرسوم</Link></li>
             <li><Link href="/directory" className="hover:text-white">دليل الأطراف المرخّصين</Link></li>
             <li><Link href="/verify" className="hover:text-white">التحقق من ترخيص أو عقد</Link></li>
+            <li><Link href="/app" className="hover:text-white">تحميل تطبيق الجوال</Link></li>
           </ul>
         </div>
         <div>
