@@ -5,7 +5,8 @@
 المنصة على PostgreSQL في التطوير والإنتاج معاً، والترحيلات في `prisma/migrations`. والإنتاج النهائي داخل المملكة (NFR-07).
 
 - `DATABASE_URL`: اتصال التشغيل، ويقبل رابط المجمِّع (pooler).
-- `DATABASE_URL_UNPOOLED`: اتصال مباشر تستعمله الترحيلات. إن لم يكن عندك مجمِّع فاجعله مثل الأول.
+- `DATABASE_URL_UNPOOLED`: اتصال مباشر للترحيلات، اختياري. إن غاب استُعمل الأول.
+- على Vercel تُقبل أيضاً أسماء المزوّدين الأخرى: `POSTGRES_PRISMA_URL` و`POSTGRES_URL` للتشغيل، و`POSTGRES_URL_NON_POOLING` للترحيلات (`scripts/vercel-build.mjs`).
 
 أوامر:
 
@@ -15,7 +16,7 @@
 
 ## Vercel (نسخة عرض)
 
-البناء على Vercel يشغّل `npm run vercel-build`: توليد عميل Prisma، ثم تطبيق الترحيلات، ثم البذرة، ثم بناء Next.js.
+البناء على Vercel يشغّل `npm run vercel-build` (`scripts/vercel-build.mjs`): توليد عميل Prisma، ثم تطبيق الترحيلات، ثم البذرة، ثم بناء Next.js. وإن لم تُربط قاعدة بيانات يتوقف برسالة تشرح الخطوة الناقصة.
 
 1. **Storage** في المشروع: أنشئ قاعدة Postgres (Neon) واربطها بالمشروع لكل البيئات، فيُضاف `DATABASE_URL` و`DATABASE_URL_UNPOOLED` تلقائياً.
 2. **Settings ثم Environment Variables**:

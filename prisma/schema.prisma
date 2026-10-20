@@ -5,17 +5,16 @@
 // - المبالغ كلها بالهللة (Int)، والضريبة تُخزَّن منفصلة.
 // - لا حذف: العقود والعروض والحضور والغرامات تُلغى بحالة.
 // - الحالات نصوص مُعرَّفة في src/lib/domain.ts، لتبقى المخطط صالحاً لـ SQLite و PostgreSQL معاً.
-// - PostgreSQL في كل البيئات (docs/DEPLOYMENT.md). DATABASE_URL للاتصال المجمّع،
-//   و DATABASE_URL_UNPOOLED للاتصال المباشر الذي تحتاجه الترحيلات.
+// - PostgreSQL في كل البيئات (docs/DEPLOYMENT.md). DATABASE_URL للتشغيل، والترحيلات
+//   على Vercel تُشغَّل على الاتصال المباشر عبر scripts/vercel-build.mjs.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ───────── الهوية والجلسات ─────────
